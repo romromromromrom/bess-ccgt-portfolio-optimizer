@@ -1,0 +1,14 @@
+services:
+  optimizer:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - AWS_REGION=${AWS_REGION:-eu-west-3}
+      - S3_BUCKET=${S3_BUCKET:-}
+      # AWS credentials: never hardcode here. Either rely on an EC2 instance
+      # role (recommended, see AWS Mini-project B in the training doc) or
+      # pass them via a local .env file that is gitignored.
+    env_file:
+      - .env
+    restart: unless-stopped
