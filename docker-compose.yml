@@ -6,9 +6,12 @@ services:
     environment:
       - AWS_REGION=${AWS_REGION:-eu-west-3}
       - S3_BUCKET=${S3_BUCKET:-}
-      # AWS credentials: never hardcode here. Either rely on an EC2 instance
-      # role (recommended, see AWS Mini-project B in the training doc) or
-      # pass them via a local .env file that is gitignored.
+      # AWS credentials are never hardcoded here. Either rely on an EC2
+      # instance role (recommended once deployed - no key exists as a file on
+      # the server) or provide a local, gitignored .env for development.
     env_file:
-      - .env
+      # Optional: the stack must come up on a fresh clone that has no .env.
+      # Requires Docker Compose v2.24+.
+      - path: .env
+        required: false
     restart: unless-stopped
