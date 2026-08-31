@@ -110,6 +110,7 @@ def compute(
             "afrr_up": afrr_up_cap_mw,
             "afrr_down": afrr_down_cap_mw,
         },
+        afrr_sustain_duration_h=bess_sustain_h,
     )
     # A CCGT is not normally prequalified for FCR on the same terms as a
     # battery — FCR needs full activation in 30 s, which a thermal unit cannot
@@ -200,8 +201,12 @@ with st.sidebar.expander("BESS", expanded=True):
     bess_power = st.slider("Power (MW)", 10.0, 200.0, 50.0, step=5.0)
     bess_capacity = st.slider("Energy capacity (MWh)", 20.0, 800.0, 100.0, step=10.0)
     bess_sustain = st.select_slider(
-        "Reserve sustain duration (h)", options=[0.25, 0.5, 1.0, 2.0], value=0.25,
-        help="How long a reserved MW must be deliverable for. Drives the SOC headroom constraint.",
+        "aFRR sustain duration (h)", options=[0.25, 0.5, 1.0, 2.0, 4.0], value=1.0,
+        help=(
+            "How long a reserved aFRR MW must be deliverable for. Drives the SOC "
+            "headroom constraint, so it converts reserve MW into locked-up MWh. "
+            "FCR is fixed at 0.25 h by its prequalification rule."
+        ),
     )
     bess_degradation = st.slider("Degradation cost (EUR/MWh discharged)", 0.0, 15.0, 2.0, step=0.5)
 

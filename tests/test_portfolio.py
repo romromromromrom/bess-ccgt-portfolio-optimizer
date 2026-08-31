@@ -111,3 +111,30 @@ def test_assets_can_hold_different_prequalified_products(
     )
     assert "reserve_fcr_mw" in result.bess_schedule
     assert "reserve_fcr_mw" not in result.ccgt_schedule
+
+
+def test_afrr_sustain_duration_actually_changes_the_solution(market, bess_config, ccgt_config):
+    """Regression guard: a UI control that silently does nothing.
+
+    The sustain duration is set per product and overrides the asset-level
+    default, so wiring a slider to `BESSReserveConfig.reserve_sustain_duration_h`
+    alone leaves it inert. This asserts the parameter that the app actually
+    exposes reaches the SOC headroom constraint.
+    """
+    from energy_portfolio.portfolio import reserve_products_from_market
+
+    short = reserve_products_from_market(market, afrr_sustain_duration_h=0.25)
+    long = reserve_products_from_market(market, afrr_sustain_duration_h=4.0)
+    assert {p.name: p.sustain_duration_h for p in short}["fcr"] == 0.25, "FCR stays fixed"
+
+    short_result = run_portfolio(market, bess_config, ccgt_config, short)
+    long_result = run_portfolio(market, bess_config, ccgt_config, long)
+
+    # A longer sustain requirement locks up more SOC per reserved MW, so the
+    # battery can hold strictly less aFRR and earns strictly less.
+    def afrr_mw(result):
+        schedule = result.bess_schedule
+        return sum(schedule[f"reserve_{n}_mw"].sum() for n in ("afrr_up", "afrr_down"))
+
+    assert afrr_mw(long_result) < afrr_mw(short_result)
+    assert long_result.bess_pnl.total < short_result.bess_pnl.total

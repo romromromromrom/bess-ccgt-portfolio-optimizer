@@ -263,6 +263,7 @@ def reserve_products_from_market(
     expected_activation_up: float = 0.12,
     expected_activation_down: float = 0.10,
     volume_caps_mw: dict[str, float] | None = None,
+    afrr_sustain_duration_h: float = 1.0,
 ) -> list[ReserveProductConfig]:
     """Build product configs whose prices are the horizon average of the data.
 
@@ -279,6 +280,9 @@ def reserve_products_from_market(
     proxy for a proper bid-into-a-supply-curve formulation.
     """
     caps = DEFAULT_VOLUME_CAPS_MW if volume_caps_mw is None else volume_caps_mw
+    # FCR's 15-minute full-activation requirement is a prequalification rule,
+    # not a modelling choice, so it stays fixed. The aFRR sustain duration is
+    # the assumption worth exploring, and is exposed.
     return [
         ReserveProductConfig(
             name="fcr",
@@ -300,7 +304,7 @@ def reserve_products_from_market(
                 market["afrr_up_activation_price_eur_mwh"].mean()
             ),
             expected_activation_ratio=expected_activation_up,
-            sustain_duration_h=1.0,
+            sustain_duration_h=afrr_sustain_duration_h,
         ),
         ReserveProductConfig(
             name="afrr_down",
@@ -313,6 +317,6 @@ def reserve_products_from_market(
                 market["afrr_down_activation_price_eur_mwh"].mean()
             ),
             expected_activation_ratio=expected_activation_down,
-            sustain_duration_h=1.0,
+            sustain_duration_h=afrr_sustain_duration_h,
         ),
     ]
