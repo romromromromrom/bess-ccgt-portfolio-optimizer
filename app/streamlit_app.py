@@ -17,7 +17,13 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+# Make both the app directory and the src layout importable. This lets the app
+# run from a bare checkout on deployment targets that install dependencies but
+# do not build the project itself (Streamlit Community Cloud). Locally, in
+# Docker and in CI the package is pip-installed and these are simply redundant.
+_APP_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(_APP_DIR))
+sys.path.insert(0, str(_APP_DIR.parent / "src"))
 
 import charts  # noqa: E402
 
@@ -240,7 +246,7 @@ if ccgt_p_min > ccgt_p_max:
     st.sidebar.error("Pmin cannot exceed Pmax.")
     st.stop()
 
-run = st.sidebar.button("▶️  Run optimization", type="primary", use_container_width=True)
+run = st.sidebar.button("▶️  Run optimization", type="primary", width="stretch")
 
 st.title("Multi-Asset Energy & Ancillary Services Optimizer")
 st.caption(
@@ -311,9 +317,9 @@ tabs = st.tabs(
 # --------------------------------------------------------------------------- #
 with tabs[0]:
     st.warning(DATA_DISCLAIMER)
-    st.altair_chart(charts.price_chart(market), use_container_width=True)
-    st.altair_chart(charts.reserve_price_chart(market), use_container_width=True)
-    st.dataframe(market.describe().T.round(2), use_container_width=True)
+    st.altair_chart(charts.price_chart(market), width="stretch")
+    st.altair_chart(charts.reserve_price_chart(market), width="stretch")
+    st.dataframe(market.describe().T.round(2), width="stretch")
     st.download_button(
         "Download market data (CSV)",
         market.to_csv().encode(),
@@ -326,23 +332,23 @@ with tabs[1]:
     st.subheader("BESS")
     st.altair_chart(
         charts.bess_dispatch_chart(with_reserves.bess_schedule, market["spot_price_eur_mwh"]),
-        use_container_width=True,
+        width="stretch",
     )
     bess_reserves = charts.reserve_stack_chart(
         with_reserves.bess_schedule, "Reserve capacity held — BESS"
     )
     if bess_reserves is not None:
-        st.altair_chart(bess_reserves, use_container_width=True)
+        st.altair_chart(bess_reserves, width="stretch")
 
     st.subheader("CCGT")
     st.altair_chart(
-        charts.ccgt_dispatch_chart(with_reserves.ccgt_schedule), use_container_width=True
+        charts.ccgt_dispatch_chart(with_reserves.ccgt_schedule), width="stretch"
     )
     ccgt_reserves = charts.reserve_stack_chart(
         with_reserves.ccgt_schedule, "Reserve capacity held — CCGT"
     )
     if ccgt_reserves is not None:
-        st.altair_chart(ccgt_reserves, use_container_width=True)
+        st.altair_chart(ccgt_reserves, width="stretch")
 
     schedule = with_reserves.ccgt_schedule
     below_srmc = schedule[
@@ -356,7 +362,7 @@ with tabs[1]:
             f"aFRR capacity more than covers the loss. An energy-only model never finds this."
         )
 
-    st.dataframe(with_reserves.timeseries.round(2), use_container_width=True, height=280)
+    st.dataframe(with_reserves.timeseries.round(2), width="stretch", height=280)
 
 # --------------------------------------------------------------------------- #
 with tabs[2]:
@@ -366,10 +372,10 @@ with tabs[2]:
         "the reserve markets are available to the optimizer, so the uplift is "
         "attributable to co-optimization rather than to a change of assumptions."
     )
-    st.altair_chart(charts.comparison_bar_chart(comparison), use_container_width=True)
-    st.dataframe(comparison.T.round(2), use_container_width=True)
+    st.altair_chart(charts.comparison_bar_chart(comparison), width="stretch")
+    st.dataframe(comparison.T.round(2), width="stretch")
     st.subheader("P&L attribution — energy + reserves")
-    st.dataframe(with_reserves.pnl_table().round(0), use_container_width=True)
+    st.dataframe(with_reserves.pnl_table().round(0), width="stretch")
 
 # --------------------------------------------------------------------------- #
 with tabs[3]:
@@ -380,8 +386,8 @@ with tabs[3]:
         "activation the TSO actually called. Re-solving with hindsight would "
         "manufacture skill the strategy never had."
     )
-    st.altair_chart(charts.backtest_chart(backtest.detail()), use_container_width=True)
-    st.dataframe(backtest.summary().round(0), use_container_width=True)
+    st.altair_chart(charts.backtest_chart(backtest.detail()), width="stretch")
+    st.dataframe(backtest.summary().round(0), width="stretch")
     st.caption(
         f"Forecast error cost = expected − realized = "
         f"**{backtest.forecast_error_cost:,.0f} EUR** over the horizon."
@@ -402,10 +408,10 @@ with tabs[4]:
             book.groupby(["asset", "market", "direction"])
             .agg(bids=("volume_mw", "size"), total_mw=("volume_mw", "sum"))
             .round(1),
-            use_container_width=True,
+            width="stretch",
         )
     with right:
-        st.dataframe(book.head(400), use_container_width=True, height=400)
+        st.dataframe(book.head(400), width="stretch", height=400)
     st.download_button(
         "Download bid book (CSV)", book.to_csv(index=False).encode(), "bids.csv", "text/csv"
     )
@@ -431,7 +437,7 @@ with tabs[5]:
             try:
                 from energy_portfolio.s3_store import upload_dataframe
 
-                stamp = pd.Timestamp.utcnow().strftime("%Y%m%dT%H%M%SZ")
+                stamp = pd.Timestamp.now(tz="UTC").strftime("%Y%m%dT%H%M%SZ")
                 upload_dataframe(market, bucket, f"market-data/{stamp}.csv", region)
                 upload_dataframe(
                     with_reserves.timeseries, bucket, f"results/{stamp}-dispatch.csv", region
