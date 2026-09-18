@@ -1,6 +1,6 @@
 # Multi-Asset Energy & Ancillary Services Optimizer
 
-[![CI/CD](https://github.com/romromromromrom/energy-portfolio-optimizer/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/romromromromrom/energy-portfolio-optimizer/actions/workflows/ci-cd.yml)
+[![CI/CD](https://github.com/romromromromrom/bess-ccgt-portfolio-optimizer/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/romromromromrom/bess-ccgt-portfolio-optimizer/actions/workflows/ci-cd.yml)
 
 I built this to answer a question I kept circling back to: how much is it actually
 worth to a portfolio to co-optimize energy and reserve markets, instead of bidding

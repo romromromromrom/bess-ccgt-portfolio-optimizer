@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "energy-portfolio-optimizer"
+name = "bess-ccgt-portfolio-optimizer"
 version = "0.1.0"
 description = "Multi-asset energy & ancillary services MILP optimizer (technical demonstrator)"
 requires-python = ">=3.11"
